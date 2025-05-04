@@ -4,10 +4,10 @@ project:
   
   
 website:
-  title: "Isaac21694"
+  title: "Civil Society Under Pressure"
   navbar:
     left:
-      - href: index.qmd
+      - href: Expanded Research Design.qmd
         text: Home
 
 format:
