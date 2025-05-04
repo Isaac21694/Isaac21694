@@ -7,7 +7,7 @@ website:
   title: "Civil Society Under Pressure"
   navbar:
     left:
-      - href: Expanded Research Design.qmd
+      - href: index.qmd
         text: Home
 
 format:
