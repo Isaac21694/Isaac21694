@@ -120,7 +120,6 @@ vdem <- vdem %>%
 ```
 
 ```{r}
-
 summary_table <- vdem %>%
   summarise(
     # Entry/Exit Variable: mean, min, max, and media
@@ -377,7 +376,7 @@ modelsummary(
 
 After controlling for country level fixed effects, when civil society strength and repression are both 0, the expected electoral democracy level is -.041. Within countries over time, when repression is held constant, a 1 unit increase in civil society strength is associated with a .464 increase in the electoral democracy index. When civil society strength is held constant, a unit increase in CSO repression is associated with a .027 point increase in electoral democracy. Similar to the main regression model, the marginal effect of CSO strength on electoral democracy declines as repression increases. For each one unit increase in repression, the effect of civil society strength on electoral democracy decreases by .255.
 
-## Findings (Regressing with Covariates and Fixed Effects)
+## Findings (Regressing with Covariates and Country Level Fixed Effects)
 
 ```{r}
 main_regress_covar <- lm(v2x_polyarchy ~ civil_society_strength*repress_rev + e_peaveduc + e_gdppc +v2smgovsmcenprc + factor(country_name), vdem)

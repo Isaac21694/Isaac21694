@@ -1,5 +1,522 @@
 ---
 title: "Isaac21694"
+format: 
+  html:
+    self-contained: true
+echo: false
+bibliography: references.bib
 ---
 
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| error: false
+
+library(vdemdata)
+library(dplyr)
+library(gt)
+library(gtExtras)
+library(tidyverse)
+library(ggplot2)
+library(ggrepel)
+library(Hmisc)
+library(modelsummary)
+data(vdem)
+```
+
+
+```{r}
+vdem <- vdem %>%
+  mutate(repress_rev = -1 * v2csreprss)
+```
+
 In Making Democracy Work, @putnam1993making attempt to explain the regional differences in institutional performance between the North and South of Italy using the proxy of civic community. @putnam1993making find that while socio-economic modernity, advanced by industrialization and economic development, can explain the high performance of Northern Italy, it cannot fully explain the regional differences in institutional performance across the country. Consequently, @putnam1993making deduce that civic community is a more powerful force driving effective governance. We know from @putnam1993making that the civic community conveys ideals of cooperation and solidarity, allowing for increased opportunities for collective action. We also know that the civic community is linked to political leaders being more egalitarian and less focused on hierarchical authority and clientilism. A non-civic community, fostering clientelism and hierarchical authority, might be more prone to corruption and the erosion of democratic institutions as leaders are more focused on transnational politics. Therefore we expect that as the civic community strengthens, a country is more likely to be categorized as a democracy. We can see this relationship in the vdem dataset referring to Figure 1 and Figure 2 . It is important to highlight that the y-axis in Figure 1 is the electoral democracy index. I find that electoral democracy is more practical in this context of analysis as this index focuses on core democratic principles like free and fair elections, voting rights, independent media, freedom of expression, and freedom of association, among others.
+
+
+```{r message=FALSE}
+average_indices <- vdem %>%
+  group_by(country_name) %>% 
+  summarise(
+    avg_core_civil_society_index = mean(v2xcs_ccsi, na.rm = TRUE),
+    avg_electoral_democracy_index = mean(v2x_polyarchy, na.rm = TRUE)
+  ) # summarise allows for quick statistical analysis like computing the mean; na.rm = TRUE ensures missing values are excluded
+
+# Step 2: Filtering countries that are high on civil society but low on electoral democracy
+average_indices_names <- vdem %>%
+  group_by(country_name) %>%
+  summarise(
+    avg_core_civil_society_index = mean(v2xcs_ccsi, na.rm = TRUE),
+    avg_electoral_democracy_index = mean(v2x_polyarchy, na.rm = TRUE)
+  ) %>%
+  filter(avg_core_civil_society_index >= 0.5, avg_electoral_democracy_index <= 0.25)
+
+# Step 3: Plotting the data
+ggplot(data = average_indices) + # Invoke ggplot to use geom_point for visualization
+  geom_point(aes(x = avg_core_civil_society_index, y = avg_electoral_democracy_index), 
+             color = "firebrick", size = 2, alpha = 0.7) + # define aesthetics x and y, use a distinct color and make the points slightly transparent
+  geom_smooth(aes(x = avg_core_civil_society_index, y = avg_electoral_democracy_index), 
+              method = "lm", se = FALSE, color = "black") + # use geom_smooth with the lm method to show the linear relationship between x and y
+  geom_text(data = subset(average_indices, country_name %in% c("Nigeria", "Liberia", "Seychelles", "Ivory Coast")), # subset function grabs countries that are high on civil society but low on electoral democracy
+            aes(x = avg_core_civil_society_index, 
+                y = avg_electoral_democracy_index, 
+                label = country_name),
+            vjust = 2,   # Adjusts vertical position of the label
+            hjust = -0.25,  # Adjusts horizontal position of the label
+            size = 1.75,     # Text size
+            color = "black") +
+  labs(
+    x = "Mean Core Civil Society Index", # label x-axis
+    y = "Mean Electoral Democracy Index", # label y-axis
+    title = "Figure 1: Mean Civil Society and Electoral Democracy Indices Across Countries"
+  ) +
+  theme_classic() + # classic theme is my favorite
+  theme(
+    plot.title = element_text(face = "bold"), # bold the plot title
+    plot.caption = element_text(hjust = 0) # left-align the caption
+  )
+```
+
+Figure 1 plots the average V-Dem core civil society index (v2xcs_ccsi) against the average electoral democracy index (v2x_polyarchy) for all countries. Countries such as Nigeria and Liberia show relatively strong civil societies but weak electoral democracy, raising questions about the ability of CSOs to influence political outcomes in repressive or semi-democratic regimes.
+
+In investigating what factors might undermine democracy within a strong civil society I came across @croke2016deliberate examination of how education can decrease electoral participating in authoritarian regimes. They find that in Zimbabwe, more educated individuals were less likely to turnout to vote, attend political meetings, or contact government officials which the authors classify as deliberate disengagement. @croke2016deliberate charactarize this phenomena by concluding that educated citizens are more politically aware and may then perceive participation as futile or as a way of avoiding risk in that engagement under an authoritarian regime may carry dangers like repression or surveillance. I then questioned, What institutional factors contribute to the coexistence of a strong civil society and weak electoral democracy?
+
+One looking to answer such a complex question might look to Larry Diamond's: Authoritarianism Goes Global: The Challenge to Democracy. Since the collapse of communism, Diamond outlines three trends that have altered the global political landscape being: the democratic surge, democratic backlash, and the authoritarian surge. In an attempt to gain a clearer picture of factors that might undermine democracy in a strong civil society I am most concerned with the authoritarian surge. Diamond illustrates that media initiatives by the "big five" authoritarian regimes like Russia's RT, China's CCTV, and Iran's Press TV seek to undermine western ideals and control political narratives in said regimes. Authoritarian regimes also seek to undermine elections and silence opposition to their practices.
+
+Building on these insights, I now turn my focus from broad institutional threats to democracy, to a more targeted analysis of the interaction between civil society repression and civil society strength and the subsequent influence on electoral democracy. In authoritarian regimes some civil society organizations are allowed to form / operate, while some states may restrict formation. Certain CSOs in authoritarian regimes may promote civic engagement in cultural and social domains leading to a stronger civil society, but political mobilization and pro-democracy coalitions are likely repressed undermining electoral democracy. In consideration of this, I looked to Civil Society and Political Change in Asia by Muthiah Alagappa, which is a comprehensive examination of the connection between civil society and political change in Asia. @alagappa2004civil investigates how CSOs interact with the state, political society, and economic factors across different regime types. Accordingly, the author makes three key propsitions: civil society is a distinct public sphere where non-state actors operate to influence state policy, CSOs play diverse roles ranging from opposition of authoritarian regimes to being regime-supported, and the strength of civil society depends on political structure and economic development. After considering an investigation of these factors and understanding civil society organizations [CSOs] as an integral piece to a strong civil society, I was led to the following question upon which I am basing my analysis: How does the interaction between CSO repression and CSO strength influence electoral democracy?
+
+Let us now turn to more concrete literature on the history of CSO repression and how the repression of CSOs may impact democracy. In the mid 1990s, @rutzen2015authoritarianism asserts that CSOs enjoyed a positive reputation within the international community stemming from their contributions to health, education, culture, etc. @rutzen2015authoritarianism reinforces that there was a shift toward declining enthusiasm for supporting CSOs especially in countries that had undergone political change in the 1980s and 1990s. Over time, said governments felt the need to strengthen state institutions and consolidate power. Most of this focus came from within "hybrid" or "semi-authoritarian regimes", in that these regime types held elections but showed little commitment to democratic values like human rights and the rule of law, principles that CSOs are so keen in supporting. Consequently, @rutzen2015authoritarianism finds that governments began tightening control on CSOs. Leaders within autocratic regimes adopted ideas similar to Putin's concept of "managed democracy" which quickly devolved into "managed civil society". @rutzen2015authoritarianism finds two key patterns that emerged: CSOs were allowed to function as long as they remained uninvolved in politics, while some states tried to co-opt CSOs while repressing those that resisted government control. As a result, civic space quickly contracted and @rutzen2015authoritarianism invokes data from the International Center for Not-for-Profit-Law to show that between 2004 and 2010, more than fifty countries considered or did enact measures to repress civil society. According to @rutzen2015authoritarianism some of the many legal measures used by governments are: requiring government approval for international funding for CSOs, stigmatizing internationally funded CSOs, capping the amount of international funding a CSO could receive, and using defamation and treason to bring criminal charges against CSOs receiving international funding. Important to highlight are the justifications that governments used for CSO repression being, protecting state sovereignty, promoting transparency and accountability in civil society and enhancing aid effectiveness. An example of repression tactics highlighted by @rutzen2015authoritarianism is that in Ethiopia, CSOs are prohibited from receiving more than 10% of their funding from international sources if said CSOs look to promote democracy.
+
+I next turn to Bernhard et al.'s Civil Society and Democracy in an Era of Inequality to understand how CSOs may impact electoral democracy across different regime types. @bernhard2017civil outlines the Gramscian view of CSOs as a way to resist authoritarianism. The Gramscian view holds that CSO mobilization can trigger democratic transitions through challenging authority and building networks of support in opposition to the regime. CSO repression, of course, works against this possibility of challenging authoritarian regimes. The Tocquevillian view holds that in democratic regimes, CSOs promote political engagement, participation, and responsiveness. However, @bernhard2017civil also notes that authoritarian elements in civil society, when linked to the state and allied with political actors, can impede equality and democratic outcomes in newly established democracies. @bernhard2017civil concludes that civil society is decisive in the emergence of democracy and to the depth of democracy, however, @bernhard2017civil importantly highlights that civil society may only be decisive at critical moments of major historical change such as a regime transition. It may therefore be that during these regime changes, CSOs are repressed the most, and therefore this contribution will be critical in robustness tests of my findings.
+
+I will measure civil society strength by the proxies of CSO structure and CSO entry / exit into public life. CSO structure measures the degree to which smaller versus larger CSOs dominant the political space. Low fragmentation of CSOs signals competition between smaller and larger CSOs to influence policy and mobilize support and political engagement, while high CSO fragmentation signals large CSOs dominate and are accorded special weight by policy makers. A CSO space with more competition for policy influence is a stronger one that is less prone to government influence. CSO entry and exit into public life measures the extent to which the governments controls CSOs and the political activities they are engaged in. Under monopolistic control, the only CSOs allowed to engage in political activity are government sponsored. While, when CSO entry and exit into public life in unconstrained, the government does not impede CSO formation and operation.
+
+Finally, why might CSO repression moderate the effect of civil society strength on electoral democracy? Critically, the presence of CSOs suggests a strong civil society in certain contexts. However, their ability to promote electoral democracy, foster political engage, and express interest depends on the political climate in which the CSO operates. When state repression is high, even well-organized and broadly supported CSOs may face barriers to mobilization and engagement such as cuts to international funding and legal constraints. Accordingly, even if CSO formation and operation within public life is possible, repression can undermine CSOs' ability to influence democratic outcomes.
+
+This introduction began with the foundational insights of Putnam et al, which emphasize that civic community is a core driver of institutional performance and democratic survival. Therefore, I began examining factors that may undermine democracy even within a strong civil society. I then refined my investigation to state repression of CSOs. We know from existing literature that CSOs play a critical role in upholding democracy and state repression of CSOs may weaken democracy. This contribution, building on the existing literature, attempts to understand CSO strength through the lenses of entry and exit into public life and CSO fragmentation. The empirical extension of my analysis is as follows: I will restrict my analysis to countries with higher GDP per-capita to rule out development as a confounding variable, which may limit CSO effectiveness and citizens willingness to participate in civic life.
+
+I proceed as follows: I construct an index of civil society strength by combining three V-Dem variables — v2cseeorgs, which measures how freely civil society organizations can enter and exit public life, and v2csstruc, which captures the degree of fragmentation and competition among CSOs, and v2csprtcpt, which captures the involvement of people in CSOs. Together, these variables represent the degree to which civil society is both institutionally open and structurally competitive and effective in engaging citizens, forming a more comprehensive measure of CSO strength. I then interact this index with civil society repression, measured by v2csrprss. This interaction allows me to test how repression conditions the effect of civil society strength on electoral democracy, measured by v2x_polyarchy. The goal is to assess whether repression undermines not just the formation and structure of CSOs, but also their capacity to translate into democratic outcomes. This modeling approach tests my core hypothesis: that the effect of civil society strength on electoral democracy weakens as state repression increases.
+
+## Hypothesis
+
+I hypothesize that civil society strength, as measured by a composite index of CSO entry and exit (v2cseeorgs), CSO structure (v2csstruc), and CSO participatory environment (v2csprtcpt), has a positive effect on electoral democracy (v2x_polyarchy). However, this positive relationship is conditional on the level of CSO repression (v2csrprss). Specifically, as repression increases, the democratic benefits of a strong civil society weaken. In regimes where repression is low, CSOs are more likely to form, operate freely, and engage in advocacy and political mobilization—contributing to higher levels of electoral democracy.
+
+Conversely, in contexts where civil society is weak—either because entry is restricted, or because large, state-aligned CSOs dominate the political space—high repression is often unnecessary, as the absence of independent civic actors eliminates potential challenges to the regime. In these settings, I expect electoral democracy measures to be low, not due to visible coercion, but due to the structural absence of mobilization, participation, and accountability. Therefore, I also expect that low values on the civil society strength index will be associated with lower levels of electoral democracy, even in the absence of overt repression.
+
+To test this, I create a civil society strength index by combining v2cseeorgs and v2csstruc_2, and v2csprtcpt and interact this index with v2csrprss in my model. I chose to use v2csstruc_2 for my index of civil society strength because it holds that neither large nor small CSOs dominate and each type of CSO contends to have their voices heard by policy makers. This ensures uniform fragmentation and limited dominance of one type of CSO in the civic space contributing to more opportunities to gain support within the state and represent interests on policy making decisions.
+
+## Data-Set and Specific Variables to Consider
+```{r}
+vdem <- vdem %>%
+  # Normalize v2cseeorgs and v2csprtcpt to a 0–1 scale
+  mutate(norm_entry_exit = (v2cseeorgs - min(v2cseeorgs, na.rm = TRUE)) /
+                           (max(v2cseeorgs, na.rm = TRUE) - min(v2cseeorgs, na.rm = TRUE))) %>%
+    mutate(norm_part = (v2csprtcpt - min(v2csprtcpt, na.rm = TRUE)) /
+                           (max(v2csprtcpt, na.rm = TRUE) - min(v2csprtcpt, na.rm = TRUE))) %>%
+  
+  # Create the civil society strength index with equal weights between structure and entry/exit
+  mutate(civil_society_strength = (norm_entry_exit * 0.3333 + v2csstruc_2 * 0.3333 + norm_part *.3333))
+```
+
+```{r}
+summary_table <- vdem %>%
+  summarise(
+    # Entry/Exit Variable: mean, min, max, and media
+    entry_mean = mean(v2cseeorgs, na.rm = TRUE), ## Take mean
+    entry_median = median(v2cseeorgs, na.rm = TRUE), ## Take the median
+    entry_min = min(v2cseeorgs, na.rm = TRUE), ## Take the min
+    entry_max = max(v2cseeorgs, na.rm = TRUE), ## Take the max
+    
+    ## CSO participatory environment
+    part_mean = mean(v2csprtcpt, na.rm = TRUE), ## Take mean
+    part_median = median(v2csprtcpt, na.rm = TRUE), ## Take the median
+    part_min = min(v2csprtcpt, na.rm = TRUE), ## Take the min
+    part_max = max(v2csprtcpt, na.rm = TRUE), ## Take the max
+    
+    
+    ## Structure Variable
+    struc_mean = mean(v2csstruc_2, na.rm = TRUE), ## Take mean
+    struc_median = median(v2csstruc_2, na.rm = TRUE), ## Take the median
+    struc_min = min(v2csstruc_2, na.rm = TRUE), ## Take the min
+    struc_max = max(v2csstruc_2, na.rm = TRUE), ## Take the max
+    
+    ## Civil society strength index
+    str_mean = mean(civil_society_strength, na.rm = TRUE), ## Take mean
+    str_median = median(civil_society_strength, na.rm = TRUE), ## Take the median
+    str_min = min(civil_society_strength, na.rm = TRUE), ## Take the min
+    str_max = max(civil_society_strength, na.rm = TRUE), ## Take the max
+
+    # Repression (ordinal): mean, median, min, and max
+    repression_mean = mean(repress_rev, na.rm = TRUE), 
+    repression_median = median(repress_rev, na.rm = TRUE), 
+    repression_min = min(repress_rev, na.rm = TRUE),
+    repression_max = max(repress_rev, na.rm = TRUE),
+
+    # Electoral democracy index: mean, min, max, and median
+    electoral_mean = mean(v2x_polyarchy, na.rm = TRUE),
+    electoral_median = median(v2x_polyarchy, na.rm = TRUE),
+    electoral_min = min(v2x_polyarchy, na.rm = TRUE),
+    electoral_max = max(v2x_polyarchy, na.rm = TRUE),
+  ) %>%
+  # Reshape the data from wide to long format
+  pivot_longer(
+    cols = everything(),
+    names_to = c("variable", "stat"), # Split column names into variable + stat
+    names_sep = "_"
+  ) %>%
+  # Reshape back to wide format: one row per variable, columns for stats
+  pivot_wider(
+    names_from = stat,
+    values_from = value
+  )
+```
+
+```{r}
+summary_table_clean <- summary_table %>%
+  mutate(variable = case_when(
+    variable == "entry" ~ "State Control of Entry and Exit of CSOs into Public Life",
+    variable == "repression" ~ "Civil Society Organization Repression",
+    variable == "electoral" ~ "Electoral Democracy Index",
+    variable == "struc" ~ "CSO Structure - Fragmentation",
+    variable == "str" ~ "Civil Society Strength Index",
+    variable == "part" ~ "CSO Participatory Environment",
+    TRUE ~ variable
+  ))
+
+# Create NYT-style gt table
+summary_table_clean %>%
+  gt(rowname_col = "variable") %>%
+  gt_theme_nytimes() %>%
+  tab_header(
+    title = "Summary Statistics of Key V-Dem Variables"
+  ) %>%
+  fmt_number(
+    columns = where(is.numeric),
+    decimals = 2
+  ) %>%
+  cols_label(
+    mean = "Mean",
+    median = "Median",
+    min = "Min",
+    max = "Max"
+  ) %>%
+  tab_options(
+    table.font.size = px(14),
+    column_labels.font.weight = "bold"
+  )
+```
+
+```{r message=FALSE, warning=FALSE}
+average_indices_strength_elec <- vdem %>%
+  group_by(country_name) %>%
+  summarise(
+    avg_civil_society_strength = mean(civil_society_strength, na.rm = TRUE),
+    avg_electoral_democracy_index = mean(v2x_polyarchy, na.rm = TRUE)
+  ) %>%
+  drop_na()
+
+ggplot(data = average_indices_strength_elec, 
+       aes(x = avg_civil_society_strength, y = avg_electoral_democracy_index)) +
+  geom_point(color = "firebrick", size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    x = "Mean Civil Society Strength Index",
+    y = "Mean Electoral Democracy Index",
+    title = "Figure 2: Mean Civil Society Strength and Electoral Democracy Indices Across Countries",
+    caption = "Note:Suggests a strong positive relationship between civil society strength and levels of electoral democracy"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    plot.caption = element_text(hjust = 0)
+  )
+```
+
+```{r message=FALSE, warning=FALSE}
+average_indices_strength_repress <- vdem %>%
+  group_by(country_name) %>%
+  summarise(
+    avg_civil_society_strength = mean(civil_society_strength, na.rm = TRUE),
+    avg_repress = mean(repress_rev, na.rm = TRUE)
+  ) %>%
+  drop_na()
+
+ggplot(data = average_indices_strength_repress, 
+       aes(y = avg_civil_society_strength, x = avg_repress)) +
+  geom_point(color = "firebrick", size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    y = "Mean Civil Society Strength Index",
+    x = "Mean Civil Society Repression (Higher = More Repressive)",
+    title = "Figure 3: Civil Society Strength and Repression",
+    subtitle = "Each point represents a country average (V-Dem data)"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    plot.caption = element_text(hjust = 0),
+    strip.text = element_text(face = "bold")
+  )
+```
+
+```{r}
+vdem <- vdem %>%
+  arrange(country_name, year) %>%
+  group_by(country_name) %>%
+  mutate(
+    avg_repression_next5 = (
+      lead(repress_rev, 1) +
+      lead(repress_rev, 2) +
+      lead(repress_rev, 3) +
+      lead(repress_rev, 4) +
+      lead(repress_rev, 5)
+    ) / 5
+  ) %>%
+  ungroup()
+```
+
+```{r}
+vdem_avg_lagged <- vdem %>%
+  group_by(country_name) %>%
+  summarise(
+    avg_civil_society_strength = mean(civil_society_strength, na.rm = TRUE),
+    future_avg_repression = mean(avg_repression_next5, na.rm = TRUE)
+  ) %>%
+  drop_na()  # Remove countries without full lag coverage
+```
+
+```{r message=FALSE}
+ggplot(vdem_avg_lagged, aes(x = future_avg_repression, y = avg_civil_society_strength)) +
+  geom_point(alpha = 0.7, color = "firebrick") +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  labs(
+    title = "Figure 4: Civil Society Strength and Repression Five Years Later",
+    subtitle = "Each point is a country average; repression is averaged over years t+1 to t+5",
+    x = "Average Repression in Future 5 Years",
+    y = "Average Civil Society Strength (Current)"
+  ) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    plot.caption = element_text(hjust = 0)
+  )
+```
+
+The main variables I am considering in my analysis are CSO repression (v2csreprss) (which I reversed so that higher figures indicate more repression), an index of civil society strength (civil_society_strength), and an electoral democracy index (v2x_polyarchy). These variables come from the v-dem dataset where the unit of analysis is a country and the sample is most sovereign and some non-sovereign territories. The CSO repression variable indicates to what extent the government represses CSOs and varies in terms of monopolistic control to severely repressive at the highest level and not repressive at the lowest. I created the index of civil society strength through merging CSO fragmentation, CSO entry and exit into public life, and CSO participatory environment and standardizing each variable along a 0 to 1 scale with equal weight. Figures 2, 3, and 4 illustrate the relationships between the variables while the summary table provides the mean, median, and range of each variable of interest.
+
+Figure 2 shows the strong and positive relationship between my civil society strength index and electoral democracy, a relationship that is justified and theoretically sound being based on a plethora of past literature and analysis. Figure 3 shows the relationship between civil society strength and repression. This relationship is theoretically insightful because it begs the question, are states repressive towards CSOs only when civil society is strong? The answer to this question, at least on a preliminary level, appears to be yes. Finally, I created a time lag plot of repression and civil society strength to uncover if time is a factor in causing states to be repressive towards CSOs. Even in time t+5, state repression is still high when civil society is strong. This shows that repression lags behind CSO strength, meaning repression is likely reactive to CSO strength, but further testing and theorizing will be required. Finally, these figures provide foundational insight into confirming my hypothesis that civil society strength is positively associated with electoral democracy. After I run my regressions, I will be able to construct further visualization of the interaction between repression and civil society strength and its effects on electoral democracy.
+
+## Research Design
+
+### Main Regression Model
+$$
+\text{Electoral Democracy}_{it} = \beta_0 + \beta_1 \cdot \text{Civil Society Strength}_{it} + \beta_2 \cdot \text{Repression}_{it} + \beta_3 \cdot (\text{Civil Society Strength}_{it} \times \text{Repression}_{it}) + \epsilon_{it}
+$$
+### Regression Model With Covariates
+$$
+\text{Electoral Democracy}_{it} = \beta_0 + \beta_1 \cdot \text{Civil Society Strength}_{it} + \beta_2 \cdot \text{Repression}_{it} + \beta_3 \cdot (\text{Civil Society Strength}_{it} \times \text{Repression}_{it}) + \beta_4 \cdot \text{Education}_{it} + \beta_5 \cdot \text{GDP per capita}_{it} + \beta_6 \cdot \text{Social Media Censorship}_{it} + \epsilon_{it}
+$$
+
+The covariates I decided to include thus far are education level (e_peaveduc), GDP per capita (e_gdppc) [hoping to rule out as confounder] and government social media censorship (v2smgovsmcenprc). I might add more as I continue with my project but my decision to include these covariates follows the simple intuition based on past literature that more educated individuals are more likely to participate in civic life and absorb political information. Also, social media censorship reduces the amount of political information available to citizens, making it less likely for citizens to be able to engage in civic life.
+
+While I analyze the relationship between civil society strength and electoral democracy, I am not committed to making a causal claim at this point. Instead, I am to identify whether the relationship between civil society strength and electoral democracy varies across the levels of CSO repression. This approach remains subject to standard limitations of observation analysis and research. Unobserved factors such as political culture, international pressure, or shifts in regime strategy may influence both civil society and democratic institutions. I will continue to attempt to approach a causal claim by including controls for education and digital censorship, among others, and include country and year fixed effects to control for time-invariant factors like culture and history and other factors like global shocks or international trends like post-Cold War democratization. I will also include a lagged repression model to account for time dynamics between repression and democratic outcomes.
+
+## Findings (Main Regression Model)
+```{r}
+main_regress <- lm(v2x_polyarchy ~ civil_society_strength*repress_rev, vdem)
+```
+
+```{r}
+modelsummary(
+  main_regress,
+  stars = TRUE,  # Adds significance stars automatically
+  fmt = 3,       # Show 3 decimal places
+  statistic = "({std.error})",  # Puts standard errors in parentheses under coefficient
+  title = "Table 1: Regression of Electoral Democracy on Civil Society Strength, Repression, and Their Interaction",
+  notes = "Standard errors in parentheses. * p < 0.05, ** p < 0.01, *** p < 0.001",
+  coef_map = c(
+    "(Intercept)" = "Intercept",
+    "civil_society_strength" = "Civil Society Strength",
+    "repress_rev" = "Repression",
+    "civil_society_strength:repress_rev" = "Civil Society Strength × Repression"
+  )
+)
+```
+
+When civil society strength and repression are both zero, the expected level of electoral democracy is .020 on the V-Dem polyarchy scale. In contexts where repression is 0, a full 1 unit increase in civil society strength is associated with a .426 increase in electoral democracy. When civil society strength is 0, a 1 unit increase in repression is associated with a .028 increase in electoral democracy. Finally, the negative coefficient on the interaction terms indicates that the effect of civil society strength on electoral democracy is .272 points weaker for a 1 unit increase in repression. As repression increases, the positive effect of civil society strength on electoral democracy declines. 
+
+## Findings (Regressing with Country Level Fixed Effects)
+```{r}
+main_regress_fixed_effects <- lm(v2x_polyarchy ~ civil_society_strength*repress_rev + factor(country_name), vdem)
+```
+
+```{r}
+modelsummary(
+  main_regress_fixed_effects,
+  stars = TRUE,  # Add significance stars
+  fmt = 3,       # 3 decimal places
+  statistic = "({std.error})",  # Standard errors underneath in parentheses
+  title = "Table 2: Regression of Electoral Democracy on Civil Society Strength, Repression, and Their Interaction (with Country Fixed Effects)",
+  notes = "Standard errors in parentheses. * p < 0.05, ** p < 0.01, *** p < 0.001. Country fixed effects included but not displayed.",
+  coef_map = c(
+    "(Intercept)" = "Intercept",
+    "civil_society_strength" = "Civil Society Strength",
+    "repress_rev" = "Repression",
+    "civil_society_strength:repress_rev" = "Civil Society Strength × Repression"
+  ),
+  gof_omit = 'AIC|BIC|Log.Lik|F|RMSE'  # Hide extra goodness-of-fit statistics for clarity
+)
+```
+
+After controlling for country level fixed effects, when civil society strength and repression are both 0, the expected electoral democracy level is -.041. Within countries over time, when repression is held constant, a 1 unit increase in civil society strength is associated with a .464 increase in the electoral democracy index. When civil society strength is held constant, a unit increase in CSO repression is associated with a .027 point increase in electoral democracy. Similar to the main regression model, the marginal effect of CSO strength on electoral democracy declines as repression increases. For each one unit increase in repression, the effect of civil society strength on electoral democracy decreases by .255. 
+
+## Findings (Regressing with Covariates and Country Level Fixed Effects)
+```{r}
+main_regress_covar <- lm(v2x_polyarchy ~ civil_society_strength*repress_rev + e_peaveduc + e_gdppc +v2smgovsmcenprc + factor(country_name), vdem)
+```
+
+```{r}
+modelsummary(
+  main_regress_covar,
+  stars = TRUE,  # Add significance stars
+  fmt = 3,       # 3 decimal places
+  statistic = "({std.error})",  # Standard errors in parentheses
+  title = "Table 3: Regression of Electoral Democracy on Civil Society Strength, Repression, and Covariates (with Country Fixed Effects)",
+  notes = "Standard errors in parentheses. * p < 0.05, ** p < 0.01, *** p < 0.001. Country fixed effects included but not displayed.",
+  coef_map = c(
+    "(Intercept)" = "Intercept",
+    "civil_society_strength" = "Civil Society Strength",
+    "repress_rev" = "Repression",
+    "civil_society_strength:repress_rev" = "Civil Society Strength × Repression",
+    "e_peaveduc" = "Education Level",
+    "e_gdppc" = "GDP per Capita",
+    "v2smgovsmcenprc" = "Gov't Social Media Censorship"
+  ),
+  gof_omit = 'AIC|BIC|Log.Lik|F|RMSE'  # Hides unnecessary goodness-of-fit stats for a cleaner table
+)
+```
+
+When all predictors are 0, the expected electoral democracy index is 0.025. Holding education level, GDP per capita, and social media censorship constant, a 1 unit increase in civil society strength is associated with a .150 increase in electoral democracy within countries over time. Holding the same factors constant, within countries over time, a 1 unit increase in repression is associated with a .036 decrease in electoral democracy. The interaction term suggests that within countries over time, holding the same factors constant, for each 1 unit increase in repression, the positive effect of civil society strength is expected to decrease by .042. This interaction effect is weaker than earlier models, but is still statistically significant and consistent with my hypothesis. 
+
+## Initial Discussion
+The results from my fully specified regression model including country-level fixed effects and covariates (education level, GDP per-capita, and government social media censorship) provide important insight into the relationship between CSO repression, civil society, and electoral democracy. First, civil society strength is strongly and positively correlated with electoral democracy. The coefficient on civil society strength (β = .150; p < .001) suggests that within countries over time, an increase in civil society strength, while holding covariates constant, is associated with a substantial increase in the electoral democracy index. Looking at civil society repression, the association between repression and electoral democracy is negative, but modest (β = −.036; p < .001), which aligns with expectations that more repressive environments tend to suppress democratic outcomes.
+
+Critically, the interaction term between civil society strength and repression is negative and significant (β = −.042; p < .001). This finding is particularly important for my theoretical framework; it suggests that the effect of civil society strength is indeed conditional on the level of repression. As repression increases, the positive effect of civil society strength declines. This finding supports the notion that while civil society plays an important role in promoting electoral democracy, its ability to do so is constrained under more repressive conditions. In highly repressive environments, CSOs may face legal, financial, or organizational constraints that hinder their ability to build democratic accountability or support political participation.
+
+I hypothesized that civil society strength is positively associated with electoral democracy, but that the effect weakens as repression increases. I found a positive and statistically significant relationship between civil society strength and electoral democracy, supporting my main hypothesis. Additionally, my subsequent hypothesis on the conditioning of repression on civil society’s effect is supported both in terms of the conditioning mechanism and direction. The interaction term between civil society strength and repression (β = −.042; p < .001) suggests that repression does condition civil society’s effect on electoral democracy — and the effect becomes weaker, not stronger, under repressive conditions.
+
+## Empirical Extension (Lagged Repression)
+```{r}
+vdem <- vdem %>%
+  arrange(country_name, year) %>%
+  group_by(country_name) %>%
+  mutate(
+    lag_repression = lag(repress_rev, 1)  ## 1-year lag
+  ) %>%
+  ungroup()
+```
+
+```{r}
+main_regress_lagged_repression <- lm( v2x_polyarchy ~ civil_society_strength * lag_repression + e_peaveduc + e_gdppc + v2smgovsmcenprc + factor(country_name),
+  data = vdem
+)
+```
+
+```{r}
+modelsummary(
+  main_regress_lagged_repression,
+  stars = TRUE,
+  fmt = 3,
+  statistic = "({std.error})",
+  title = "Table 4: Regression of Electoral Democracy on Civil Society Strength, Lagged Repression, and Covariates (Country Fixed Effects)",
+  notes = "Standard errors in parentheses. * p < 0.05, ** p < 0.01, *** p < 0.001. Country fixed effects included but not displayed.",
+  coef_map = c(
+    "(Intercept)" = "Intercept",
+    "civil_society_strength" = "Civil Society Strength",
+    "lag_repression" = "Lagged Repression",
+    "civil_society_strength:lag_repression" = "Civil Society Strength × Lagged Repression",
+    "e_peaveduc" = "Education Level",
+    "e_gdppc" = "GDP per Capita",
+    "v2smgovsmcenprc" = "Gov't Social Media Censorship"
+  ),
+  gof_omit = 'AIC|BIC|Log.Lik|F|RMSE'
+)
+```
+
+This lag structure captures the intuitition that the effects of civil society on electoral democracy are unlikely to be immediate. By interacting current civil society strength with lagged repression, I can assess whether past government repression conditions the positive effect of electoral democracy. The negative and significant interaction between civil society strength and lagged repression (β = .056, p < 0.001) indicates that civil society's positive impact on electoral democracy, when repression occurred in the previous year, is weaker than assessing repression in the same year. 
+
+## Empirical Extension (Restricting to Above Median of GDP per Capita)
+```{r}
+median_gdppc <- median(vdem$e_gdppc, na.rm = TRUE)
+```
+
+```{r}
+vdem_high_gdp <- vdem %>%
+  filter(e_gdppc > median_gdppc)
+```
+
+```{r}
+main_regress_highgdp <- lm(v2x_polyarchy ~ civil_society_strength * lag_repression + e_peaveduc + v2smgovsmcenprc + factor(country_name),
+  data = vdem_high_gdp
+)
+```
+
+```{r}
+modelsummary(
+  main_regress_highgdp,
+  stars = TRUE,
+  fmt = 3,
+  statistic = "({std.error})",
+  title = "Table 5: Regression on Electoral Democracy (Restricted to High GDP Per Capita Countries)",
+  notes = "Standard errors in parentheses. * p < 0.05, ** p < 0.01, *** p < 0.001. Country fixed effects included but not displayed.",
+  coef_map = c(
+    "(Intercept)" = "Intercept",
+    "civil_society_strength" = "Civil Society Strength",
+    "lag_repression" = "Lagged Repression",
+    "civil_society_strength:lag_repression" = "Civil Society Strength × Lagged Repression",
+    "e_peaveduc" = "Education Level",
+    "e_gdppc" = "GDP per Capita",
+    "v2smgovsmcenprc" = "Gov't Social Media Censorship"
+  ),
+  gof_omit = 'AIC|BIC|Log.Lik|F|RMSE'
+)
+```
+
+Within countries over time that are above the median of GDP per capita, the negative and significant interaction term of .042 (p < .001) reinforces the condtioning of the effects of repression on the effects of civil society strength on electoral democracy. Specifically, for each 1 unit increase in repression one year ago, the effect of civil society strength on electoral democracy decreases by .042 within countries over time while holding covariates (education level, government social media censorship) constant. The observation of this effect within richer countries allows me to rule out economic development as a confounding variable.  
+
+## Further Approaching Causal Inference: Regressing with a Linear Time Trend
+```{r}
+vdem_high_gdp <- vdem_high_gdp %>%
+  arrange(country_name, year) %>%
+  group_by(country_name) %>%
+  mutate(time_trend = row_number()) %>%
+  ungroup()
+```
+
+```{r}
+main_regress_highgdp_time_trend <- lm(v2x_polyarchy ~ civil_society_strength * lag_repression + time_trend + e_peaveduc + v2smgovsmcenprc + factor(country_name),
+  data = vdem_high_gdp)
+```
+
+```{r}
+modelsummary(
+  main_regress_highgdp_time_trend,
+  stars = TRUE,
+  fmt = 3,
+  statistic = "({std.error})",
+  title = "Table 5: Regression on Electoral Democracy (Restricted to High GDP Per Capita Countries)",
+  notes = "Standard errors in parentheses. * p < 0.05, ** p < 0.01, *** p < 0.001. Country fixed effects included but not displayed.",
+  coef_map = c(
+    "(Intercept)" = "Intercept",
+    "civil_society_strength" = "Civil Society Strength",
+    "lag_repression" = "Lagged Repression",
+    "civil_society_strength:lag_repression" = "Civil Society Strength × Lagged Repression",
+    "e_peaveduc" = "Education Level",
+    "e_gdppc" = "GDP per Capita",
+    "v2smgovsmcenprc" = "Gov't Social Media Censorship"
+  ),
+  gof_omit = 'AIC|BIC|Log.Lik|F|RMSE'
+)
+```
+
+Holding repression, time, and covariates constant, within the same country, a one-unit increase in civil society strength is associated with a .151 increase in electoral democracy. It is important to highlight that the interaction term between CSO remains negative and significant. This indicates that the positive relationship between civil society strength and electoral democracy is weakened when accounting for repression that occurred last year. For each 1 unit increase in lagged repression, the marginal effect of civil society strength on electoral democracy decreases by .042. This model accounts for all time invariant differences across countries meaning the interaction term accounts for effects within countries over time. The inclusion of the linear time trend in this model now accounts for secular changes over time like global shifts in civic norms to ensure that the interaction term is not capturing long-term movement in repression and civil society.  
