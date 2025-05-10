@@ -351,7 +351,7 @@ modelsummary(
   stars = TRUE,  # Adds significance stars automatically
   fmt = 3,       # Show 3 decimal places
   statistic = "({std.error})",  # Puts standard errors in parentheses under coefficient
-  title = "Table 1: Regression of Electoral Democracy on Civil Society Strength, Repression, and Their Interaction",
+  title = "Table 1: Regression of Electoral Democracy on Civil Society Strength, Repression, and Their Interaction (Main Model)",
   notes = "Standard errors in parentheses. * p < 0.05, ** p < 0.01, *** p < 0.001",
   coef_map = c(
     "(Intercept)" = "Intercept",
@@ -487,7 +487,7 @@ modelsummary(
   stars = TRUE,
   fmt = 3,
   statistic = "({std.error})",
-  title = "Table 5: Regression on Electoral Democracy (Restricted to High GDP Per Capita Countries)",
+  title = "Table 5: Regression on Electoral Democracy (Restricted to High GDP Per Capita Countries), including covariates, country-level fixed effects, and lagged repression",
   notes = "Standard errors in parentheses. * p < 0.05, ** p < 0.01, *** p < 0.001. Country fixed effects included but not displayed.",
   coef_map = c(
     "(Intercept)" = "Intercept",
@@ -524,7 +524,7 @@ modelsummary(
   stars = TRUE,
   fmt = 3,
   statistic = "({std.error})",
-  title = "Table 5: Regression on Electoral Democracy (Restricted to High GDP Per Capita Countries)",
+  title = "Table 6: Regression on Electoral Democracy (Restricted to High GDP Per Capita Countries), including a linear time trend, covariates, lagged repression, and country-level fixed effects",
   notes = "Standard errors in parentheses. * p < 0.05, ** p < 0.01, *** p < 0.001. Country fixed effects included but not displayed.",
   coef_map = c(
     "(Intercept)" = "Intercept",
@@ -567,16 +567,20 @@ ggplot(pred_data, aes(x = civil_society_strength, y = predicted_polyarchy,
     title = "Figure 5: Predicted Electoral Democracy by CSO Strength and Lagged Repression",
     x = "Civil Society Strength",
     y = "Predicted Electoral Democracy",
-    color = "Lagged Repression (t+1)"
+    color = "Lagged Repression (t+1)",
+    caption = "Note: Shows how the effect of civil scoiety strength weakens when past repression increases"
   ) +
-  theme_classic()
+  theme_classic() +
+  theme(
+    plot.title = element_text(face = "bold", size = 12),
+    plot.caption = element_text(hjust = 0))
 ```
 
-For the final piece of my analysis, I constructed a visualization of predicted values of electoral democracy as a function of civil society strength and lagged repression. The darker colors represent lower levels of repression, while the yellow and orange represents high levels of repression (using lagged repression variable). This plot indicates that civil society strength has a strong positive effect on electoral democracy; however, the color gradient suggests that this effect is moderated as repression increases. 
+For the final piece of my analysis, I constructed a visualization of predicted values of electoral democracy as a function of civil society strength and lagged repression (Figure 5). The darker colors represent lower levels of repression, while the yellow and orange represents high levels of repression (using lagged repression variable). This plot indicates that civil society strength has a strong positive effect on electoral democracy; however, the color gradient suggests that this effect is moderated as repression increases. 
 
 ## Discussion and Policy Implications
 
-Across all models, civil society strength shows a strong, positive, and statistically significant relationship with electoral democracy. This finding is robust across all empirical extensions confirming my expectation that civil society is essential for maintaining democracy. The interaction term between civil society strength and repression consistently shows negative and significant coefficients. This supports my hypothesis that the positive impact of civil society strength on electoral democracy is moderated by CSO repression. While my analysis does not confirm a causal relationship, it offers strong and conclusive evidence that approaches causality. By incorporating country-level fixed effects, I control for unobserved country level factors that could bias estimates. I also rule out GDP-per capita as a confounder by restricting analysis to countries above the median of gdp per-capita. I also include covariates such as education and social media censorship, factors that are known to affect democratic outcomes and civil society strength. By introducing a lag structure, I capture the effect of past repression on current electoral democracy and address concerns on reverse causality. Finally, by regressing with a linear time trend, I can account for global changes over time such as war or democratization waves that could influence countries. Together, these choices strengthen the argument that the relationships I observed are meaningful political dynamics. 
+Across all models, civil society strength shows a strong, positive, and statistically significant relationship with electoral democracy. This finding is robust across all empirical extensions confirming my expectation that civil society is essential for maintaining democracy. The interaction term between civil society strength and repression consistently shows negative and significant coefficients. This supports my hypothesis that the positive impact of civil society strength on electoral democracy is moderated and weakened by CSO repression. While my analysis does not confirm a causal relationship, it offers strong and conclusive evidence that approaches causality. By incorporating country-level fixed effects, I control for unobserved country level factors that could bias estimates. I also rule out GDP-per capita as a confounder by restricting analysis to countries above the median of gdp per-capita. I also include covariates such as education and social media censorship, factors that are known to affect democratic outcomes and civil society strength. By introducing a lag structure, I capture the effect of past repression on current electoral democracy and address concerns on reverse causality. Finally, by regressing with a linear time trend, I can account for global changes over time such as war or democratization waves that could influence countries. Together, these choices strengthen the argument that the relationships I observed are meaningful political dynamics. 
 
 My results show that civil society strength is consistently associated with higher levels of electoral democracy. This effect, however, is moderated under regimes repressing CSOs. Governments and international actors should therefore prioritize legal protection for CSOs including rights to funding access and the opportunity to engage in civic life without fear of persecution. Since civil society strength is a strong indicator of electoral democracy, institutions like Freedom House or the World Bank should integrate CSO based metrics to assess democracy. My findings also have clear implications for EU foreign policy given Poland and Hungary's attacks on civil society in recent years. The EU's ability to enforce democratic ideals through the Conditionality Regulation or Article 7 procedures should also depend on member states enacting legislation to repress civil society organizations.
 
