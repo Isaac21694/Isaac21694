@@ -44,7 +44,7 @@ average_indices <- vdem %>%
     avg_electoral_democracy_index = mean(v2x_polyarchy, na.rm = TRUE)
   ) # summarise allows for quick statistical analysis like computing the mean; na.rm = TRUE ensures missing values are excluded
 
-# Step 2: Filtering countries that are high on civil society but low on electoral democracy
+# Filtering countries that are high on civil society but low on electoral democracy
 average_indices_names <- vdem %>%
   group_by(country_name) %>%
   summarise(
@@ -53,7 +53,7 @@ average_indices_names <- vdem %>%
   ) %>%
   filter(avg_core_civil_society_index >= 0.5, avg_electoral_democracy_index <= 0.25)
 
-# Step 3: Plotting the data
+# Plotting the data
 ggplot(data = average_indices) + # Invoke ggplot to use geom_point for visualization
   geom_point(aes(x = avg_core_civil_society_index, y = avg_electoral_democracy_index), 
              color = "firebrick", size = 2, alpha = 0.7) + # define aesthetics x and y, use a distinct color and make the points slightly transparent
@@ -70,7 +70,9 @@ ggplot(data = average_indices) + # Invoke ggplot to use geom_point for visualiza
   labs(
     x = "Mean Core Civil Society Index", # label x-axis
     y = "Mean Electoral Democracy Index", # label y-axis
-    title = "Figure 1: Mean Civil Society and Electoral Democracy"
+    title = "Figure 1: Mean Civil Society and Electoral Democracy",
+    caption = "Note: Indicates a strong and positive relationship between the VDem civil society index and
+electoral democracy"
   ) +
   theme_classic() + # classic theme is my favorite
   theme(
