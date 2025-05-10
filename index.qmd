@@ -461,7 +461,7 @@ modelsummary(
     "e_gdppc" = "GDP per Capita",
     "v2smgovsmcenprc" = "Gov't Social Media Censorship"
   ),
-  gof_omit = 'AIC|BIC|Log.Lik|F|RMSE'
+  gof_omit = 'AIC|BIC|Log.Lik|F|RMSE' ## Omit unnecessary statistics
 )
 ```
 
@@ -545,14 +545,14 @@ Holding repression, time, and covariates constant, within the same above gdp per
 
 ```{r}
 pred_data <- expand.grid(
-  civil_society_strength = seq(0, 1, by = 0.01),  # Vary CSO strength from 0 to 1
+  civil_society_strength = seq(0, 1, by = 0.01),  ## Vary CSO strength from 0 to 1
   lag_repression = seq(min(vdem_high_gdp$lag_repression, na.rm = TRUE),
                        max(vdem_high_gdp$lag_repression, na.rm = TRUE),
                        length.out = 100),
   time_trend = median(vdem_high_gdp$time_trend, na.rm = TRUE),
   e_peaveduc = median(vdem_high_gdp$e_peaveduc, na.rm = TRUE),
   v2smgovsmcenprc = median(vdem_high_gdp$v2smgovsmcenprc, na.rm = TRUE),
-  country_name = "Germany"  # fixed country to hold FE constant (must be in dataset)
+  country_name = "Germany"  ## fixed country to hold FE constant (must be in dataset)
 )
 ```
 
@@ -570,12 +570,13 @@ ggplot(pred_data, aes(x = civil_society_strength, y = predicted_polyarchy,
     x = "Civil Society Strength",
     y = "Predicted Electoral Democracy",
     color = "Lagged Repression (t+1)",
-    caption = "Note: Shows how the effect of civil society strength weakens when past repression increases. /nUpward trend indicates positive and strong relationship between civil society strength and electoral democracy, /ngradient from darker to ligher indicates effect weakens as repression increases"
+    caption = "Note: Upward Trend indicates strong/positive relationship between democracy and civil society strength
+Gradient from dark to light indicates repression weakens the effect"
   ) +
   theme_classic() +
   theme(
     plot.title = element_text(face = "bold", size = 12),
-    plot.caption = element_text(hjust = 0, size = 9, margin = margin(t = 10)))
+    plot.caption = element_text(hjust = 0, size = 8, margin = margin(t = 10)))
 ```
 
 For the final piece of my analysis, I constructed a visualization of predicted values of electoral democracy as a function of civil society strength and lagged repression (Figure 5). The darker colors represent lower levels of repression, while the yellow and orange represents high levels of repression (using lagged repression variable). This plot indicates that civil society strength has a strong positive effect on electoral democracy; however, the color gradient suggests that this effect is moderated as repression increases. 
